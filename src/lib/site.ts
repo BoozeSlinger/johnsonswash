@@ -3,8 +3,11 @@
 export const site = {
   name: "Performance One Pressure Washing",
   shortName: "Performance One",
-  // Swap for the real domain once it's registered.
-  url: "https://two-suns.vercel.app",
+  // Vercel exposes the project's production domain at build time (a custom
+  // domain once one is attached), so canonical/OG/schema URLs follow the deploy.
+  url: process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000",
   phone: "(951) 313-0942",
   phoneHref: "tel:+19513130942",
   locality: "Riverside",
