@@ -35,3 +35,4 @@ coverage/
 .cache/
 .turbo/
 ui-ux-pro-max copy/
+.vercel
