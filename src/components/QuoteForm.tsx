@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, CheckCircle, Loader2 } from "lucide-react";
+import { Send, CheckCircle, Loader2, Phone } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SectionHeader from "./SectionHeader";
+import { cn } from "@/lib/utils";
+import { services, site } from "@/lib/site";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,11 +19,54 @@ type FormData = {
   serviceType: string;
   address: string;
   message: string;
+  company: string; // honeypot — real users never see it
 };
 
+const steps = [
+  { title: "Send your details", body: "Takes about a minute." },
+  { title: "Get your free quote", body: "A detailed estimate within 24 hours." },
+  { title: "We schedule & wash", body: "On a day that works for you." },
+];
+
+const inputClass =
+  "w-full border border-white/10 bg-carbon/60 px-4 py-3 text-white placeholder-white/30 outline-none transition-colors focus:border-signal aria-[invalid=true]:border-red-400/70";
+
+function Field({
+  id,
+  label,
+  error,
+  className,
+  children,
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("flex flex-col gap-2", className)}>
+      <label htmlFor={id} className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/60">
+        {label}
+      </label>
+      {children}
+      {error && (
+        <span id={`${id}-error`} role="alert" className="text-xs font-medium text-red-400">
+          {error}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function QuoteForm() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>();
+  const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>();
   const sectionRef = useRef<HTMLElement>(null);
   const formCardRef = useRef<HTMLDivElement>(null);
 
@@ -42,164 +87,206 @@ export default function QuoteForm() {
   }, []);
 
   const onSubmit = async (data: FormData) => {
-    console.log(data);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitted(true);
+    setStatus("idle");
+    try {
+      const res = await fetch("/api/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error(`Quote request failed: ${res.status}`);
+      reset();
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
   };
 
+  const describedBy = (field: keyof FormData) => (errors[field] ? `${field}-error` : undefined);
+
   return (
-    <section ref={sectionRef} id="contact" className="py-24 bg-[#0A1628] text-white relative">
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] to-transparent" />
-      <div className="container max-w-5xl relative z-10">
-        <SectionHeader 
-          title="Ready for a Clean Start?" 
-          subtitle="Get an Estimate" 
-          dark
+    <section ref={sectionRef} id="contact" className="relative bg-graphite py-24 sm:py-32">
+      <div className="container max-w-6xl">
+        <SectionHeader
+          index="06"
+          eyebrow="Free estimate"
+          title={
+            <>
+              Ready for a <span className="text-signal">clean start?</span>
+            </>
+          }
         />
-        <div 
+
+        <div
           ref={formCardRef}
-          className="bg-white/5 backdrop-blur-xl rounded-[2rem] shadow-[0_0_40px_rgba(90,200,58,0.15)] overflow-hidden border border-white/10 flex flex-col md:flex-row mt-12"
+          className="grid overflow-hidden border border-white/10 bg-carbon lg:grid-cols-[2fr_3fr]"
         >
-          <div className="bg-gradient-to-br from-[#072649] to-[#5AC83A] p-12 text-white md:w-2/5 flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="relative z-10">
-              <h2 className="text-3xl lg:text-4xl font-black mb-6 tracking-tight">Get Your Free Quote</h2>
-              <p className="text-white/80 mb-8 leading-relaxed text-lg font-medium">
-                Fill out the form and our team will get back to you with a detailed, no-obligation estimate within 24 hours.
-              </p>
+          {/* Left panel */}
+          <div className="relative flex flex-col justify-between gap-10 overflow-hidden border-b border-white/10 p-8 sm:p-10 lg:border-b-0 lg:border-r">
+            <span className="bg-checker absolute right-0 top-0 h-full w-10 text-white/[0.04]" aria-hidden="true" />
+            <div className="relative">
+              <h3 className="font-display text-3xl leading-tight text-white">Get your free quote</h3>
+              <ol className="mt-8 space-y-6">
+                {steps.map((step, i) => (
+                  <li key={step.title} className="flex gap-4">
+                    <span className="font-mono text-xs text-signal">{String(i + 1).padStart(2, "0")}</span>
+                    <div>
+                      <p className="font-semibold text-white">{step.title}</p>
+                      <p className="mt-1 text-sm text-white/60">{step.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <div className="relative z-10 text-sm font-black text-[#0A1628] bg-white/20 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-              <span className="mr-1">⚡</span> Over 500+ happy customers served this year across the region.
+
+            <div className="relative">
+              <p className="eyebrow">Prefer to talk?</p>
+              <a
+                href={site.phoneHref}
+                className="font-display mt-3 inline-flex items-center gap-3 text-2xl text-white transition-colors hover:text-signal"
+              >
+                <Phone size={22} className="text-signal" />
+                {site.phone}
+              </a>
             </div>
           </div>
 
-
-          <div className="p-8 md:p-12 md:w-3/5 bg-transparent">
+          {/* Form */}
+          <div className="p-8 sm:p-10">
             <AnimatePresence mode="wait">
-              {!isSubmitted ? (
+              {status !== "sent" ? (
                 <motion.form
                   key="form"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onSubmit={handleSubmit(onSubmit)}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  noValidate
+                  className="relative grid grid-cols-1 gap-6 md:grid-cols-2"
                 >
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="fullName" className="text-sm font-bold text-blue-100/80 uppercase tracking-wider">Full Name</label>
+                  <Field id="fullName" label="Full name" error={errors.fullName?.message}>
                     <input
                       id="fullName"
+                      autoComplete="name"
+                      aria-invalid={!!errors.fullName}
+                      aria-describedby={describedBy("fullName")}
                       {...register("fullName", { required: "Name is required" })}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#5AC83A] focus:bg-white/10 text-white placeholder-white/30 transition-all duration-300 shadow-inner"
-                      placeholder="John Doe"
+                      className={inputClass}
+                      placeholder="Jane Smith"
                     />
-                    {errors.fullName && (
-                      <span role="alert" className="text-xs text-red-400 font-medium flex items-center gap-1 mt-1">
-                        {errors.fullName.message}
-                      </span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="phone" className="text-sm font-bold text-blue-100/80 uppercase tracking-wider">Phone Number</label>
+                  <Field id="phone" label="Phone" error={errors.phone?.message}>
                     <input
                       id="phone"
-                      {...register("phone", { required: "Phone is required" })}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#5AC83A] focus:bg-white/10 text-white placeholder-white/30 transition-all duration-300 shadow-inner"
-                      placeholder="(951) 313-0942"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      aria-invalid={!!errors.phone}
+                      aria-describedby={describedBy("phone")}
+                      {...register("phone", {
+                        required: "Phone is required",
+                        validate: (v) => v.replace(/\D/g, "").length >= 10 || "Enter a 10-digit phone number",
+                      })}
+                      className={inputClass}
+                      placeholder="(951) 555-0123"
                     />
-                    {errors.phone && (
-                      <span role="alert" className="text-xs text-red-400 font-medium flex items-center gap-1 mt-1">
-                        {errors.phone.message}
-                      </span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label htmlFor="email" className="text-sm font-bold text-blue-100/80 uppercase tracking-wider">Email Address</label>
+                  <Field id="email" label="Email (optional)" error={errors.email?.message} className="md:col-span-2">
                     <input
                       id="email"
-                      {...register("email", { 
-                        required: "Email is required",
-                        pattern: { value: /^\S+@\S+$/i, message: "Invalid email" }
+                      type="email"
+                      autoComplete="email"
+                      aria-invalid={!!errors.email}
+                      aria-describedby={describedBy("email")}
+                      {...register("email", {
+                        pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email" },
                       })}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#5AC83A] focus:bg-white/10 text-white placeholder-white/30 transition-all duration-300 shadow-inner"
-                      placeholder="john@example.com"
+                      className={inputClass}
+                      placeholder="jane@example.com"
                     />
-                    {errors.email && (
-                      <span role="alert" className="text-xs text-red-400 font-medium flex items-center gap-1 mt-1">
-                        {errors.email.message}
-                      </span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label htmlFor="serviceType" className="text-sm font-bold text-blue-100/80 uppercase tracking-wider">Service Type</label>
+                  <Field id="serviceType" label="Service" error={errors.serviceType?.message} className="md:col-span-2">
                     <div className="relative">
                       <select
                         id="serviceType"
+                        aria-invalid={!!errors.serviceType}
+                        aria-describedby={describedBy("serviceType")}
                         {...register("serviceType", { required: "Please select a service" })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#5AC83A] focus:bg-white/10 text-white transition-all duration-300 shadow-inner appearance-none"
+                        className={cn(inputClass, "appearance-none pr-10")}
                       >
-                        <option value="" className="bg-[#0A1628] text-white">Select a service...</option>
-                        <option value="house" className="bg-[#0A1628] text-white">House Washing</option>
-                        <option value="driveway" className="bg-[#0A1628] text-white">Driveway & Concrete</option>
-                        <option value="roof" className="bg-[#0A1628] text-white">Roof Soft Washing</option>
-                        <option value="deck" className="bg-[#0A1628] text-white">Deck & Patio Restoration</option>
-                        <option value="fence" className="bg-[#0A1628] text-white">Fence Cleaning</option>
-                        <option value="commercial" className="bg-[#0A1628] text-white">Commercial Power Washing</option>
+                        <option value="" className="bg-carbon">Select a service…</option>
+                        {services.map((s) => (
+                          <option key={s.id} value={s.id} className="bg-carbon">
+                            {s.title}
+                          </option>
+                        ))}
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                      </div>
+                      <svg
+                        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 fill-current text-white/60"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        aria-hidden="true"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
                     </div>
-                    {errors.serviceType && (
-                      <span role="alert" className="text-xs text-red-400 font-medium flex items-center gap-1 mt-1">
-                        {errors.serviceType.message}
-                      </span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label htmlFor="address" className="text-sm font-bold text-blue-100/80 uppercase tracking-wider">Property Address</label>
+                  <Field id="address" label="Property address" error={errors.address?.message} className="md:col-span-2">
                     <input
                       id="address"
+                      autoComplete="street-address"
+                      aria-invalid={!!errors.address}
+                      aria-describedby={describedBy("address")}
                       {...register("address", { required: "Address is required" })}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#5AC83A] focus:bg-white/10 text-white placeholder-white/30 transition-all duration-300 shadow-inner"
-                      placeholder="123 Wash St, Riverside, CA"
+                      className={inputClass}
+                      placeholder="123 Main St, Riverside, CA"
                     />
-                    {errors.address && (
-                      <span role="alert" className="text-xs text-red-400 font-medium flex items-center gap-1 mt-1">
-                        {errors.address.message}
-                      </span>
-                    )}
-                  </div>
+                  </Field>
 
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label htmlFor="message" className="text-sm font-bold text-blue-100/80 uppercase tracking-wider">Message (Optional)</label>
+                  <Field id="message" label="Anything we should know? (optional)" className="md:col-span-2">
                     <textarea
                       id="message"
-                      {...register("message")}
                       rows={4}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#5AC83A] focus:bg-white/10 text-white placeholder-white/30 transition-all duration-300 shadow-inner resize-none"
-                      placeholder="Tell us more about your project..."
+                      {...register("message")}
+                      className={cn(inputClass, "resize-none")}
+                      placeholder="Surfaces, square footage, stains, gate codes…"
                     />
+                  </Field>
+
+                  {/* Honeypot */}
+                  <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                    <label htmlFor="company">Company</label>
+                    <input id="company" tabIndex={-1} autoComplete="off" {...register("company")} />
                   </div>
 
+                  {status === "error" && (
+                    <p role="alert" className="border border-red-400/40 bg-red-400/10 px-4 py-3 text-sm text-red-200 md:col-span-2">
+                      We couldn&apos;t send your request. Please call us at{" "}
+                      <a href={site.phoneHref} className="font-semibold text-white underline">
+                        {site.phone}
+                      </a>{" "}
+                      and we&apos;ll get you a quote right away.
+                    </p>
+                  )}
+
                   <button
+                    type="submit"
                     disabled={isSubmitting}
-                    className="md:col-span-2 bg-[#5AC83A] text-white hover:bg-[#3A9E28] rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(90,200,58,0.3)] flex items-center justify-center gap-2 disabled:opacity-70 mt-4 h-14"
+                    className="btn btn-primary mt-2 w-full disabled:opacity-70 md:col-span-2"
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 size={18} className="animate-spin" />
-                        Sending...
+                        Sending…
                       </>
                     ) : (
                       <>
-                        Send My Request
-                        <Send size={18} />
+                        Send my request
+                        <Send size={17} />
                       </>
                     )}
                   </button>
@@ -207,21 +294,23 @@ export default function QuoteForm() {
               ) : (
                 <motion.div
                   key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="h-full flex flex-col items-center justify-center text-center py-12"
-                  aria-live="polite"
+                  className="flex h-full flex-col items-center justify-center py-12 text-center"
+                  role="status"
                 >
-                  <div className="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center border border-signal/40 bg-signal/10 text-signal">
                     <CheckCircle size={40} />
                   </div>
-                  <h3 className="text-3xl font-black mb-4">Request Received!</h3>
-                  <p className="text-white/80 max-w-sm mx-auto">
-                    Thanks for reaching out to Two Suns. Our team is reviewing your request and will contact you shortly with a free quote.
+                  <h3 className="font-display text-3xl text-white">Request received</h3>
+                  <p className="mx-auto mt-4 max-w-sm text-white/70">
+                    Thanks for reaching out to {site.shortName}. We&apos;ll be in touch within 24 hours
+                    with your free quote.
                   </p>
                   <button
-                    onClick={() => setIsSubmitted(false)}
-                    className="mt-8 text-[#5AC83A] font-bold hover:text-[#56AAE2] transition-colors"
+                    type="button"
+                    onClick={() => setStatus("idle")}
+                    className="mt-8 font-mono text-xs uppercase tracking-[0.18em] text-signal transition-colors hover:text-signal-hot"
                   >
                     Send another request
                   </button>

@@ -35,10 +35,7 @@ export default function ScrollProgressBar() {
     <div
       ref={barRef}
       className="fixed top-0 left-0 right-0 z-[9999] h-[3px] origin-left scale-x-0"
-      style={{
-        background: "linear-gradient(90deg, #5AC83A 0%, #56AAE2 50%, #5AC83A 100%)",
-        boxShadow: "0 0 10px rgba(90, 200, 58, 0.8)",
-      }}
+      style={{ background: "#FF5A1F" }}
       aria-hidden="true"
     />
   );

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Star, Quote } from "lucide-react";
+import { Star } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -12,7 +12,7 @@ const reviews = [
   {
     name: "Sarah M.",
     city: "Riverside, CA",
-    text: "Two Suns did an incredible job on our driveway. It looks brand new! They were professional, on time, and very reasonably priced.",
+    text: "They did an incredible job on our driveway. It looks brand new! They were professional, on time, and very reasonably priced.",
   },
   {
     name: "Jason R.",
@@ -26,16 +26,23 @@ const reviews = [
   },
 ];
 
+function Stars({ size }: { size: number }) {
+  return (
+    <div className="flex gap-1" aria-hidden="true">
+      {[...Array(5)].map((_, i) => (
+        <Star key={i} size={size} className="fill-signal text-signal" />
+      ))}
+    </div>
+  );
+}
+
 export default function Testimonials() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Staggered reveal — works perfectly with Lenis (no pin conflict)
-      const cards = gsap.utils.toArray<HTMLElement>(".testimonial-card");
-
-      gsap.from(cards, {
+      gsap.from(".testimonial-card", {
         scrollTrigger: {
           trigger: cardsRef.current,
           start: "top 80%",
@@ -54,82 +61,50 @@ export default function Testimonials() {
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      id="testimonials"
-      className="py-24 bg-[#0A1628] text-white relative overflow-hidden"
-    >
-      {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#5AC83A]/5 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="container relative z-10">
-        <SectionHeader
-          title="What Our Customers Say"
-          subtitle="Success Stories"
-          dark
-        />
-
-        {/* Star rating summary */}
-        <div className="flex justify-center items-center gap-2 -mt-8 mb-16">
-          <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={28}
-                className="fill-[#5AC83A] text-[#5AC83A] drop-shadow-[0_0_8px_rgba(90,200,58,0.6)]"
-              />
-            ))}
+    <section ref={sectionRef} id="testimonials" className="relative bg-graphite py-24 sm:py-32">
+      <div className="container">
+        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+          <SectionHeader
+            index="04"
+            eyebrow="Reviews"
+            title={
+              <>
+                Word travels <span className="text-signal">fast.</span>
+              </>
+            }
+          />
+          <div className="mb-12 flex items-center gap-3 sm:mb-16">
+            <Stars size={22} />
+            <span className="font-mono text-sm text-white/60">5.0 · 200+ reviews</span>
           </div>
-          <span className="text-white/40 text-sm font-medium ml-2">5.0 · 200+ reviews</span>
         </div>
 
-        {/* Mobile: horizontal snap scroll | Desktop: grid with stagger reveal */}
+        {/* Mobile: horizontal snap scroll | Desktop: 3-up grid */}
         <div
           ref={cardsRef}
-          className="
-            flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory no-scrollbar
-            md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none
-          "
+          className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 no-scrollbar sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0"
         >
-          {reviews.map((review, index) => (
-            <div
+          {reviews.map((review) => (
+            <figure
               key={review.name}
-              className="testimonial-card w-[82vw] flex-shrink-0 snap-center md:w-auto md:flex-shrink
-                bg-white/[0.04] backdrop-blur-xl p-8 rounded-[2rem]
-                border border-white/10 hover:border-[#5AC83A]/30
-                flex flex-col justify-between
-                shadow-[0_4px_30px_rgba(0,0,0,0.3)]
-                hover:shadow-[0_8px_40px_rgba(90,200,58,0.12)]
-                transition-all duration-500 hover:-translate-y-2
-                group
-              "
+              className="testimonial-card flex w-[82vw] shrink-0 snap-center flex-col border border-white/10 bg-carbon p-8 transition-colors hover:border-signal/40 md:w-auto"
             >
-              {/* Large quote icon */}
-              <Quote
-                size={40}
-                className="text-[#5AC83A]/20 mb-4 group-hover:text-[#5AC83A]/40 transition-colors duration-500"
-              />
-
-              <div className="flex gap-1 mb-5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} className="fill-[#5AC83A] text-[#5AC83A]" />
-                ))}
-              </div>
-
-              <p className="text-lg md:text-xl text-white/80 leading-relaxed mb-8 flex-1 font-medium">
-                "{review.text}"
-              </p>
-
-              <div className="flex items-center gap-4 border-t border-white/[0.08] pt-6">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#5AC83A] to-[#56AAE2] flex items-center justify-center text-white font-black text-lg shadow-[0_0_15px_rgba(90,200,58,0.35)] flex-shrink-0">
+              <Stars size={16} />
+              <blockquote className="mt-6 flex-1 text-lg leading-relaxed text-white/80">
+                &ldquo;{review.text}&rdquo;
+              </blockquote>
+              <figcaption className="mt-8 flex items-center gap-4 border-t border-white/10 pt-6">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-signal font-display text-lg text-carbon">
                   {review.name[0]}
-                </div>
-                <div>
-                  <h5 className="font-bold text-base text-white">{review.name}</h5>
-                  <p className="text-sm text-[#5AC83A] font-medium mt-0.5">{review.city}</p>
-                </div>
-              </div>
-            </div>
+                </span>
+                <span>
+                  <span className="block font-semibold text-white">{review.name}</span>
+                  <span className="mt-0.5 block font-mono text-xs uppercase tracking-[0.14em] text-white/50">
+                    {review.city}
+                  </span>
+                </span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>

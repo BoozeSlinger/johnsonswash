@@ -1,50 +1,56 @@
-import type { Metadata } from "next";
-import { Inter, Montserrat, Bebas_Neue } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import ScrollProgressBar from "@/components/ScrollProgressBar";
 import BackToTop from "@/components/BackToTop";
+import { site } from "@/lib/site";
 
-const inter = Inter({
+// Variable Archivo with the width axis: expanded black italic for display,
+// normal width for body copy — one family, two voices.
+const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-archivo",
+  display: "swap",
+  axes: ["wdth"],
+  style: ["normal", "italic"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-  display: "swap",
-  weight: ["400", "700", "800"],
-});
-
-const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  variable: "--font-bebas",
-  display: "swap",
-  weight: "400",
-});
+const description =
+  "Professional pressure washing and soft washing in Riverside and the Inland Empire. Driveways, homes, roofs, decks and storefronts. Free quotes within 24 hours.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://twosuns-pressurewashing.vercel.app"),
-  title: "Two Suns Pressure Washing | Riverside's Best Pressure Washing Service",
-  description: "Professional pressure washing in Riverside, CA. Expert cleaning for driveways, homes, roofs, and more. Get a free quote fast from Two Suns.",
-  keywords: ["Riverside pressure washing", "power washing Riverside", "driveway cleaning", "roof soft washing", "Two Suns Pressure Washing"],
+  metadataBase: new URL(site.url),
+  title: `${site.name} | Riverside & Inland Empire`,
+  description,
+  keywords: [
+    "Riverside pressure washing",
+    "power washing Riverside",
+    "driveway cleaning",
+    "roof soft washing",
+    "house washing Inland Empire",
+    site.name,
+  ],
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Two Suns Pressure Washing",
-    description: "Bold, local, trustworthy pressure washing services in Riverside.",
-    url: "https://twosuns-pressurewashing.vercel.app",
-    siteName: "Two Suns Pressure Washing",
-    images: [
-      {
-        url: "/logo.png",
-        width: 1200,
-        height: 630,
-      },
-    ],
+    title: site.name,
+    description,
+    url: "/",
+    siteName: site.name,
     locale: "en_US",
     type: "website",
   },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B0D10",
 };
 
 export default function RootLayout({
@@ -53,8 +59,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${montserrat.variable} ${bebasNeue.variable} scroll-smooth`}>
-      <body className="antialiased bg-[#0A1628] text-white">
+    <html lang="en" className={`${archivo.variable} ${jetbrainsMono.variable}`}>
+      <body className="antialiased">
         <SmoothScroll>
           <ScrollProgressBar />
           <BackToTop />
