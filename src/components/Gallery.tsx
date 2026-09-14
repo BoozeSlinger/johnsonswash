@@ -9,20 +9,20 @@ const comparisons = [
   {
     title: "Driveway Deep Clean",
     category: "Driveway",
-    before: "/services/driveway_before.png",
-    after: "/services/driveway_after.png",
+    before: "/services/driveway_before.jpg",
+    after: "/services/driveway_after.jpg",
   },
   {
     title: "House Siding Refresh",
     category: "House Washing",
-    before: "/services/house_before.png",
-    after: "/services/house_after.png",
+    before: "/services/house_before.jpg",
+    after: "/services/house_after.jpg",
   },
   {
     title: "Roof Moss Removal",
     category: "Roof Cleaning",
-    before: "/services/roof_before.png",
-    after: "/services/roof_after.png",
+    before: "/services/roof_before.jpg",
+    after: "/services/roof_after.jpg",
   },
   {
     title: "Deck & Patio Revival",

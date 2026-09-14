@@ -30,19 +30,19 @@ export const services = [
     id: "house",
     title: "House Washing",
     description: "Gentle soft wash that removes algae, mold, and dirt without damaging your siding.",
-    image: "/services/house_after.png",
+    image: "/services/house_after.jpg",
   },
   {
     id: "driveway",
     title: "Driveway & Concrete",
     description: "Deep pressure cleaning that removes oil stains and years of ground-in grime.",
-    image: "/services/driveway_after.png",
+    image: "/services/driveway_after.jpg",
   },
   {
     id: "roof",
     title: "Roof Soft Washing",
     description: "Eliminate black streaks and moss growth with our safe, low-pressure treatment.",
-    image: "/services/roof_after.png",
+    image: "/services/roof_after.jpg",
   },
   {
     id: "deck",
